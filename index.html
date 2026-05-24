@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KBTI 膝格测试</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1e2433;
+      --muted: #667085;
+      --line: #dfe5ef;
+      --surface: #ffffff;
+      --surface-soft: #f8fafc;
+      --page: #f3f7fb;
+      --purple: #5636c7;
+      --purple-dark: #3c2198;
+      --teal: #16a68e;
+      --teal-soft: #e9fbf6;
+      --amber: #ffd66b;
+      --coral: #ff7b54;
+      --shadow: 0 18px 48px rgba(35, 31, 79, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", "PingFang SC", sans-serif;
+      background: var(--purple);
+      color: var(--ink);
+    }
+
+    button {
+      border: 0;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:focus-visible {
+      outline: 3px solid rgba(22, 166, 142, 0.34);
+      outline-offset: 3px;
+    }
+
+    .page {
+      min-height: 100svh;
+      display: flex;
+      justify-content: center;
+      padding: 0;
+      background: var(--purple);
+    }
+
+    .app {
+      width: 100%;
+      min-height: 100svh;
+      display: flex;
+      flex-direction: column;
+      background: var(--purple);
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    .view {
+      display: none;
+      min-height: 100%;
+      flex: 1;
+    }
+
+    .view.is-active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .start-view {
+      width: 100%;
+      height: auto;
+      min-height: 100svh;
+      padding: 0;
+      gap: clamp(8px, 1.4svh, 12px);
+      justify-content: flex-start;
+      background: var(--purple);
+      overflow: hidden;
+    }
+
+    .hero-panel {
+      flex: 0 0 auto;
+      width: 100%;
+      max-width: none;
+      display: flex;
+      align-items: flex-start;
+      justify-content: flex-start;
+      padding: 0;
+      background: var(--purple);
+      overflow: hidden;
+    }
+
+    .hero-image {
+      width: 100%;
+      max-width: none;
+      height: auto;
+      flex: 0 0 auto;
+      display: block;
+      background: var(--purple);
+    }
+
+    .start-actions {
+      flex: 0 0 auto;
+      width: 100%;
+      padding: 0;
+      background: var(--purple);
+      overflow: hidden;
+    }
+
+    .start-actions .button-wrapper {
+      width: 100%;
+      max-width: none;
+      padding: 0 clamp(16px, 4vw, 40px);
+      background: var(--purple);
+    }
+
+    .start-actions .primary-button {
+      width: 100%;
+      min-height: clamp(44px, 6svh, 52px);
+    }
+
+    @media (min-width: 769px) {
+      .start-actions .button-wrapper {
+        padding-left: clamp(16px, 4vw, 40px);
+        padding-right: clamp(16px, 4vw, 40px);
+      }
+    }
+
+    h2,
+    p {
+      margin: 0;
+    }
+
+    .primary-button,
+    .secondary-button,
+    .nav-button,
+    .option-button {
+      min-height: 48px;
+      border-radius: 8px;
+      transition: transform 160ms ease, background-color 160ms ease, border-color 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .primary-button {
+      width: 100%;
+      background: var(--purple);
+      color: #fff;
+      border: 2px solid rgba(255, 255, 255, 0.78);
+      font-size: 17px;
+      font-weight: 800;
+      box-shadow: 0 12px 24px rgba(24, 14, 72, 0.18);
+    }
+
+    .primary-button:hover:not(:disabled),
+    .nav-button.next:hover:not(:disabled),
+    .secondary-button:hover:not(:disabled),
+    .option-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .quiz-view {
+      width: min(100%, 520px);
+      align-self: center;
+      min-height: 100svh;
+      padding: 18px;
+      gap: 18px;
+      background: rgba(255, 255, 255, 0.94);
+    }
+
+    .topbar {
+      display: grid;
+      gap: 10px;
+    }
+
+    .topline {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    .brand {
+      color: var(--purple-dark);
+      font-weight: 900;
+    }
+
+    .answered-count {
+      flex: 0 0 auto;
+      padding: 5px 9px;
+      border-radius: 8px;
+      background: #fff4d3;
+      color: #8a5a00;
+      font-weight: 800;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 999px;
+      background: #e6eaf2;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, var(--teal), var(--amber), var(--coral));
+      transition: width 180ms ease;
+    }
+
+    .question-block {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 18px;
+      min-height: 360px;
+    }
+
+    .question-number {
+      width: max-content;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: #efeaff;
+      color: var(--purple-dark);
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .question-title {
+      font-size: clamp(23px, 6.2vw, 32px);
+      line-height: 1.28;
+      letter-spacing: 0;
+    }
+
+    .options {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-button {
+      width: 100%;
+      min-height: 58px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 13px 14px;
+      border: 2px solid var(--line);
+      background: var(--surface);
+      color: var(--ink);
+      text-align: left;
+      line-height: 1.35;
+      box-shadow: 0 8px 18px rgba(30, 36, 51, 0.06);
+    }
+
+    .option-mark {
+      flex: 0 0 22px;
+      width: 22px;
+      height: 22px;
+      border: 2px solid #aeb8c8;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      background: #fff;
+    }
+
+    .option-mark::after {
+      content: "";
+      width: 10px;
+      height: 10px;
+      border-radius: 999px;
+      background: transparent;
+      transition: background-color 160ms ease;
+    }
+
+    .option-button.is-selected {
+      border-color: var(--teal);
+      background: #f0fffb;
+      box-shadow: 0 10px 22px rgba(22, 166, 142, 0.14);
+    }
+
+    .option-button.is-selected .option-mark {
+      border-color: var(--teal);
+    }
+
+    .option-button.is-selected .option-mark::after {
+      background: var(--teal);
+    }
+
+    .nav {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1.35fr;
+      gap: 12px;
+      padding-top: 4px;
+    }
+
+    .nav-button,
+    .secondary-button {
+      font-weight: 800;
+    }
+
+    .nav-button.home,
+    .secondary-button {
+      background: #eef2f7;
+      color: #344054;
+    }
+
+    .nav-button.prev,
+    .nav-button.next {
+      background: var(--purple);
+      color: #fff;
+    }
+
+    .nav-button:disabled,
+    .primary-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.46;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .result-view {
+      width: 100%;
+      align-self: center;
+      min-height: 100svh;
+      padding: 20px 16px calc(20px + env(safe-area-inset-bottom));
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      text-align: center;
+      background: #fff;
+    }
+
+    .result-image {
+      width: min(100%, 520px);
+      max-height: calc(100svh - 112px - env(safe-area-inset-bottom));
+      object-fit: contain;
+      display: block;
+      background: #fff;
+    }
+
+    .result-actions {
+      width: min(100%, 520px);
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      background: #fff;
+    }
+
+    .result-actions .secondary-button,
+    .result-actions .save-button {
+      width: 100%;
+      min-height: 48px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 800;
+      border: none;
+      cursor: pointer;
+      transition: transform 160ms ease, background-color 160ms ease;
+    }
+
+    .result-actions .secondary-button {
+      background: #eef2f7;
+      color: #344054;
+    }
+
+    .result-actions .save-button {
+      background: var(--purple);
+      color: #fff;
+    }
+
+    .result-actions .save-button {
+      min-height: 58px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+      line-height: 1.15;
+    }
+
+    .save-button-main {
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .save-button-sub {
+      font-size: 11px;
+      font-weight: 600;
+      opacity: 0.88;
+    }
+
+    .result-actions .secondary-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .result-actions .save-button:hover {
+      transform: translateY(-1px);
+    }
+
+    .poster-save-layer {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: calc(18px + env(safe-area-inset-top)) 18px calc(18px + env(safe-area-inset-bottom));
+      background: rgba(14, 10, 32, 0.72);
+    }
+
+    .poster-save-layer.is-visible {
+      display: flex;
+    }
+
+    .poster-save-backdrop {
+      position: absolute;
+      inset: 0;
+      background: transparent;
+    }
+
+    .poster-save-panel {
+      position: relative;
+      z-index: 1;
+      width: min(100%, 520px);
+      max-height: calc(100svh - 36px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      padding: 12px;
+      border-radius: 8px;
+      background: #fff;
+      box-shadow: 0 22px 60px rgba(0, 0, 0, 0.28);
+    }
+
+    .poster-save-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 34px;
+      height: 34px;
+      border-radius: 999px;
+      background: rgba(30, 36, 51, 0.08);
+      color: var(--ink);
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .poster-save-title {
+      min-height: 34px;
+      padding: 4px 42px 0;
+      color: var(--ink);
+      font-size: 15px;
+      font-weight: 800;
+      line-height: 1.35;
+      text-align: center;
+    }
+
+    .poster-save-image {
+      width: 100%;
+      max-height: calc(100svh - 130px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+      display: block;
+      object-fit: contain;
+      background: #fff;
+      -webkit-touch-callout: default;
+      -webkit-user-select: auto;
+      user-select: auto;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 540px) {
+      .page {
+        padding: 0;
+      }
+
+      .app {
+        width: 100%;
+        min-height: 100svh;
+        border-radius: 0;
+        border: 0;
+      }
+
+      .start-view {
+        padding: 0;
+      }
+
+      .quiz-view {
+        padding: 16px;
+      }
+
+      .question-block {
+        min-height: 0;
+        justify-content: flex-start;
+        padding-top: 30px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition: none !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    .footer-disclaimer {
+      width: 100%;
+      flex: 0 0 auto;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.85);
+      padding: 12px 16px 16px;
+      text-align: center;
+      font-size: 11px;
+      line-height: 1.6;
+      color: rgba(30, 36, 51, 0.7);
+    }
+
+    .footer-disclaimer p {
+      margin: 0;
+    }
+
+    @media (max-width: 540px) {
+      .start-actions .button-wrapper {
+        padding: 0 14px;
+      }
+
+      .start-view .footer-disclaimer {
+        padding: 8px 12px calc(8px + env(safe-area-inset-bottom));
+        font-size: 10px;
+        line-height: 1.45;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <section class="app" aria-live="polite">
+      <div class="view start-view is-active" id="startView">
+        <div class="hero-panel">
+          <img class="hero-image" src="src/img_homepage.jpg" alt="KBTI 膝格测试主视觉">
+        </div>
+        <div class="start-actions">
+          <div class="button-wrapper">
+            <button class="primary-button" id="startButton" type="button">立即开始测试</button>
+          </div>
+        </div>
+        <footer class="footer-disclaimer">
+          <p>温馨提示，本测试仅为趣味健康科普与风险意识提醒，不能替代医生专业诊断。</p>
+          <p>如果你的膝盖出现反复肿胀、疼痛、僵硬、异响、活动受限等症状，请尽快前往三甲医院骨肿瘤科、骨科或运动医学科就诊。</p>
+        </footer>
+      </div>
+
+      <div class="view quiz-view" id="quizView">
+        <header class="topbar">
+          <div class="topline">
+            <span class="brand">KBTI 膝格测试</span>
+            <span class="answered-count" id="answeredCount">已答 0/13</span>
+          </div>
+          <div class="progress-track" aria-hidden="true">
+            <div class="progress-fill" id="progressFill"></div>
+          </div>
+        </header>
+
+        <section class="question-block">
+          <span class="question-number" id="questionNumber">第 1 题</span>
+          <h2 class="question-title" id="questionTitle"></h2>
+          <div class="options" id="options"></div>
+        </section>
+
+        <nav class="nav" aria-label="答题操作">
+          <button class="nav-button home" id="homeButton" type="button">回到首页</button>
+          <button class="nav-button prev" id="prevButton" type="button">上一题</button>
+          <button class="nav-button next" id="nextButton" type="button" disabled>下一题</button>
+        </nav>
+        <footer class="footer-disclaimer">
+          <p>温馨提示，本测试仅为趣味健康科普与风险意识提醒，不能替代医生专业诊断。</p>
+          <p>如果你的膝盖出现反复肿胀、疼痛、僵硬、异响、活动受限等症状，请尽快前往三甲医院骨肿瘤科、骨科或运动医学科就诊。</p>
+        </footer>
+      </div>
+
+      <div class="view result-view" id="resultView">
+        <img class="result-image" id="resultImage" src="" alt="">
+        <div class="result-actions">
+          <button class="secondary-button" id="restartButton" type="button">重新答题</button>
+          <button class="save-button" id="saveButton" type="button">
+            <span class="save-button-main">保存海报</span>
+            <span class="save-button-sub">（弹出图片长按保存）</span>
+          </button>
+        </div>
+        <footer class="footer-disclaimer">
+          <p>温馨提示，本测试仅为趣味健康科普与风险意识提醒，不能替代医生专业诊断。</p>
+          <p>如果你的膝盖出现反复肿胀、疼痛、僵硬、异响、活动受限等症状，请尽快前往三甲医院骨肿瘤科、骨科或运动医学科就诊。</p>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <div class="poster-save-layer" id="posterSaveLayer" aria-hidden="true">
+    <button class="poster-save-backdrop" id="posterSaveBackdrop" type="button" aria-label="关闭保存提示"></button>
+    <div class="poster-save-panel" role="dialog" aria-modal="true" aria-labelledby="posterSaveTitle">
+      <button class="poster-save-close" id="posterSaveClose" type="button" aria-label="关闭">×</button>
+      <p class="poster-save-title" id="posterSaveTitle">长按图片保存到手机相册</p>
+      <img class="poster-save-image" id="posterSaveImage" src="" alt="">
+    </div>
+  </div>
+
+  <script>
+    const questions = [
+      {
+        title: "请问您的性别是？",
+        options: [
+          { label: "男", score: 0 },
+          { label: "女", score: 0 }
+        ]
+      },
+      {
+        title: "请问您的年龄范围是？",
+        options: [
+          { label: "20岁以下", score: 5 },
+          { label: "20~50岁", score: 10 },
+          { label: "50岁以上", score: 5 }
+        ]
+      },
+      {
+        title: "请问近期您是否感到膝关节肿胀？",
+        options: [
+          { label: "没有肿胀", score: 0 },
+          { label: "轻微肿胀", score: 5 },
+          { label: "明显肿胀", score: 10 }
+        ]
+      },
+      {
+        title: "请问近期您是否感到膝关节疼痛？",
+        options: [
+          { label: "没有疼痛", score: 0 },
+          { label: "偶尔疼痛", score: 5 },
+          { label: "经常疼痛", score: 10 }
+        ]
+      },
+      {
+        title: "请问近期您是否感到膝关节僵硬？",
+        options: [
+          { label: "从未有过", score: 0 },
+          { label: "轻微僵硬", score: 5 },
+          { label: "明显僵硬", score: 10 }
+        ]
+      },
+      {
+        title: "请问您是否能步行15分钟以上？",
+        options: [
+          { label: "轻松完成", score: 0 },
+          { label: "勉强完成", score: 5 },
+          { label: "无法完成", score: 10 }
+        ]
+      },
+      {
+        title: "请问您能以正常速度上下楼梯吗？",
+        options: [
+          { label: "能", score: 0 },
+          { label: "有些困难", score: 5 },
+          { label: "无法完成", score: 10 }
+        ]
+      },
+      {
+        title: "请问您能站立1小时吗？",
+        options: [
+          { label: "能轻松完成", score: 0 },
+          { label: "有些困难", score: 5 },
+          { label: "无法完成", score: 10 }
+        ]
+      },
+      {
+        title: "请问您能锻炼1小时（如快走、健身）吗？",
+        options: [
+          { label: "能轻松完成", score: 0 },
+          { label: "有些困难", score: 5 },
+          { label: "无法完成", score: 10 }
+        ]
+      },
+      {
+        title: "请问您能将1袋水果提上一段楼梯吗？",
+        options: [
+          { label: "能轻松完成", score: 0 },
+          { label: "有些困难", score: 5 },
+          { label: "无法完成", score: 10 }
+        ]
+      },
+      {
+        title: "您目前的健康状况，对俯身、屈膝或弯腰造成了限制吗？",
+        options: [
+          { label: "毫无限制", score: 0 },
+          { label: "轻微受限", score: 5 },
+          { label: "明显受限", score: 10 }
+        ]
+      },
+      {
+        title: "您目前的健康状况，对做高强度家务（如擦地板、移动沉重家具）造成了限制吗？",
+        options: [
+          { label: "毫无限制", score: 0 },
+          { label: "轻微受限", score: 5 },
+          { label: "明显受限", score: 10 }
+        ]
+      },
+      {
+        title: "请问您是否有过关节损伤史？（如扭伤、骨折、软骨损伤等）",
+        options: [
+          { label: "无关节损伤史", score: 0 },
+          { label: "有过关节损伤史，但未明确诊断", score: 5 },
+          { label: "有过关节损伤史，且已明确存在关节侵蚀或损伤", score: 10 }
+        ]
+      }
+    ];
+
+    const results = [
+      { max: 20, title: "钛合金膝", image: "src/5.jpg" },
+      { max: 40, title: "铁膝侠", image: "src/4.jpg" },
+      { max: 60, title: "弹簧膝", image: "src/3.jpg" },
+      { max: 80, title: "警报膝", image: "src/2.jpg" },
+      { max: 100, title: "玻璃膝", image: "src/1.jpg" },
+      { max: 120, title: "战损膝", image: "src/0.jpg" }
+    ];
+
+    const startView = document.querySelector("#startView");
+    const quizView = document.querySelector("#quizView");
+    const resultView = document.querySelector("#resultView");
+    const startButton = document.querySelector("#startButton");
+    const homeButton = document.querySelector("#homeButton");
+    const restartButton = document.querySelector("#restartButton");
+    const saveButton = document.querySelector("#saveButton");
+    const prevButton = document.querySelector("#prevButton");
+    const nextButton = document.querySelector("#nextButton");
+    const answeredCount = document.querySelector("#answeredCount");
+    const progressFill = document.querySelector("#progressFill");
+    const questionNumber = document.querySelector("#questionNumber");
+    const questionTitle = document.querySelector("#questionTitle");
+    const optionsNode = document.querySelector("#options");
+    const resultImage = document.querySelector("#resultImage");
+    const posterSaveLayer = document.querySelector("#posterSaveLayer");
+    const posterSaveBackdrop = document.querySelector("#posterSaveBackdrop");
+    const posterSaveClose = document.querySelector("#posterSaveClose");
+    const posterSaveImage = document.querySelector("#posterSaveImage");
+
+    let currentIndex = 0;
+    let answers = Array(questions.length).fill(null);
+    let currentResult = null;
+    let currentPosterUrl = "";
+
+    function setView(view) {
+      [startView, quizView, resultView].forEach((node) => {
+        node.classList.toggle("is-active", node === view);
+      });
+    }
+
+    function answeredTotal() {
+      return answers.filter((value) => value !== null).length;
+    }
+
+    function renderQuestion() {
+      const question = questions[currentIndex];
+      const answered = answeredTotal();
+      const hasAnswer = answers[currentIndex] !== null;
+
+      answeredCount.textContent = `已答 ${answered}/${questions.length}`;
+      progressFill.style.width = `${(answered / questions.length) * 100}%`;
+      questionNumber.textContent = `第 ${currentIndex + 1} 题`;
+      questionTitle.textContent = question.title;
+      prevButton.disabled = currentIndex === 0;
+      nextButton.disabled = !hasAnswer;
+      nextButton.textContent = currentIndex === questions.length - 1 ? "提交" : "下一题";
+
+      optionsNode.innerHTML = "";
+      question.options.forEach((option, optionIndex) => {
+        const button = document.createElement("button");
+        const selected = answers[currentIndex] === optionIndex;
+        button.type = "button";
+        button.className = `option-button${selected ? " is-selected" : ""}`;
+        button.setAttribute("aria-pressed", String(selected));
+        button.innerHTML = `<span class="option-mark" aria-hidden="true"></span><span>${option.label}</span>`;
+        button.addEventListener("click", () => {
+          answers[currentIndex] = optionIndex;
+          if (currentIndex < questions.length - 1) {
+            currentIndex += 1;
+            renderQuestion();
+          } else if (answeredTotal() === questions.length) {
+            showResult();
+          } else {
+            renderQuestion();
+          }
+        });
+        optionsNode.appendChild(button);
+      });
+    }
+
+    function calculateResult() {
+      const total = answers.reduce((sum, optionIndex, questionIndex) => {
+        if (optionIndex === null) {
+          return sum;
+        }
+        return sum + questions[questionIndex].options[optionIndex].score;
+      }, 0);
+      return results.find((item) => total <= item.max) || results[results.length - 1];
+    }
+
+    function showResult() {
+      const result = calculateResult();
+      currentResult = result;
+      resultImage.src = result.image;
+      resultImage.alt = result.title;
+      setView(resultView);
+    }
+
+    function getCurrentResult() {
+      return currentResult || calculateResult();
+    }
+
+    function getResultImageUrl(result) {
+      return new URL(result.image, window.location.href).href;
+    }
+
+    function openPosterSaveLayer(result) {
+      const imageUrl = getResultImageUrl(result);
+
+      currentPosterUrl = imageUrl;
+      posterSaveImage.src = imageUrl;
+      posterSaveImage.alt = result.title;
+      posterSaveLayer.classList.add("is-visible");
+      posterSaveLayer.setAttribute("aria-hidden", "false");
+    }
+
+    function closePosterSaveLayer() {
+      posterSaveLayer.classList.remove("is-visible");
+      posterSaveLayer.setAttribute("aria-hidden", "true");
+    }
+
+    function saveCurrentResultImage() {
+      const result = getCurrentResult();
+      openPosterSaveLayer(result);
+    }
+
+    startButton.addEventListener("click", () => {
+      currentIndex = 0;
+      answers = Array(questions.length).fill(null);
+      currentResult = null;
+      renderQuestion();
+      setView(quizView);
+    });
+
+    homeButton.addEventListener("click", () => {
+      currentResult = null;
+      setView(startView);
+    });
+
+    restartButton.addEventListener("click", () => {
+      currentResult = null;
+      setView(startView);
+    });
+
+    saveButton.addEventListener("click", saveCurrentResultImage);
+    posterSaveBackdrop.addEventListener("click", closePosterSaveLayer);
+    posterSaveClose.addEventListener("click", closePosterSaveLayer);
+
+    prevButton.addEventListener("click", () => {
+      if (currentIndex > 0) {
+        currentIndex -= 1;
+        renderQuestion();
+      }
+    });
+
+    nextButton.addEventListener("click", () => {
+      if (answers[currentIndex] === null) {
+        return;
+      }
+      if (currentIndex < questions.length - 1) {
+        currentIndex += 1;
+        renderQuestion();
+        return;
+      }
+      if (answeredTotal() === questions.length) {
+        showResult();
+      }
+    });
+  </script>
+</body>
+</html>
